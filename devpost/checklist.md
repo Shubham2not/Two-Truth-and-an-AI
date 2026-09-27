@@ -46,20 +46,23 @@ Build mode: learn
 
 ## Final Review
 
-- [ ] Final review complete — feedback resolved and learner confirms ready to ship
+- [x] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [x] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
+- [x] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
+- [x] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
 
-Activity and evidence: [to be recorded upon completion]
-Route and stops: [to be recorded upon completion]
-Edit outcome: [to be recorded upon completion]
-Reflection: [to be recorded upon completion]
-Activity mode: [to be recorded upon completion]
+Activity and evidence: 3-stop code tour connecting user submission to server proxy, Gemini schema generation, and reactive reveal card; investigation and hardening of 429/404 dashboard metrics.
+Route and stops:
+  1. `src/main.js` -> `handleSubmission()` (input transition and state update)
+  2. `vite.config.js` -> `geminiProxyPlugin()` and `callGemini()` (secure server proxy, structured JSON schema, backoff cascade)
+  3. `src/main.js` -> `renderRevealCard()` and `resetState()` (interactive outcome evaluation, randomized reaction punchlines, clean reset)
+Edit outcome: Pruned model cascade to verified `gemini-3.5-flash` / `gemini-3.8-flash` and added 1.2s backoff on 429/503.
+Reflection: Offered optional transfer reflection question on agent collaboration.
+Activity mode: Guided code route + architecture app-map.
 
 ## Revisions
 
-- Model fallback cascade added (`gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-2.5-flash-lite`) — handles temporary capacity spikes (503) or per-model free quota thresholds seamlessly by cascading to candidate flash models using the same structured output API.
+- Model fallback cascade added and refined (`gemini-3.5-flash`, `gemini-3.8-flash`) with 1.2s retry backoff — handles temporary capacity spikes (503) or per-model free quota thresholds seamlessly by cascading to candidate flash models using the same structured output API without triggering 404s.

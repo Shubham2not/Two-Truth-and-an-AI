@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two Truths and an AI — App Map & Code Reference</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #0f172a;
+      --border: #1e293b;
+      --accent: #6366f1;
+      --accent-subtle: rgba(99, 102, 241, 0.12);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --amber: #f59e0b;
+      --green: #10b981;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 32px 20px;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .meta {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: var(--accent-subtle);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: var(--accent);
+      font-family: var(--mono);
+    }
+
+    section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    p { margin-bottom: 12px; color: #cbd5e1; }
+    p:last-child { margin-bottom: 0; }
+
+    code {
+      font-family: var(--mono);
+      background: rgba(30, 41, 59, 0.7);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+      color: #e2e8f0;
+    }
+
+    /* Diagram */
+    .flow-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .flow-step {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 16px;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      align-items: center;
+    }
+
+    .flow-label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+    }
+
+    .flow-desc {
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    /* Tour Stops */
+    .stop-card {
+      border-left: 3px solid var(--accent);
+      padding-left: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stop-card:last-child { margin-bottom: 0; }
+    .stop-title {
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .stop-path {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    /* Changes Guide */
+    .pointer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 600px) {
+      .pointer-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .pointer-item {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .pointer-goal {
+      font-weight: 600;
+      color: #fff;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .pointer-target {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--accent);
+    }
+
+    /* Reuse Note */
+    .reuse-box {
+      border-left: 3px solid var(--green);
+      background: rgba(16, 185, 129, 0.08);
+      padding: 16px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* Collapsible */
+    details {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.4);
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    summary:hover { color: var(--text); }
+    details[open] summary { margin-bottom: 12px; color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Two Truths and an AI — App Map</h1>
+      <p class="tagline">Architecture reference, code route, and reusable practices for the deadpan lie detector.</p>
+      <span class="meta">Commit snapshot: e631c7b</span>
+    </header>
+
+    <!-- Overview -->
+    <section>
+      <h2>App Overview</h2>
+      <p>
+        <strong>Two Truths and an AI</strong> is a single-card party game. The user enters three personal statements (two true, one false). A local backend proxy forwards the claims to Google Gemini with a deadpan persona prompt and strict JSON schema. The AI evaluates each statement with dry, observational wit, suspects one lie, and lets the user reveal the truth for a smug victory or begrudging crack in character.
+      </p>
+    </section>
+
+    <!-- Core Journey Flow -->
+    <section>
+      <h2>The Core Data Flow</h2>
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <span class="flow-label">1. Browser Input</span>
+          <span class="flow-desc">User submits 3 statements in <code>src/main.js</code> via <code>handleSubmission()</code>.</span>
+        </div>
+        <div class="flow-step">
+          <span class="flow-label">2. Local Proxy</span>
+          <span class="flow-desc">Vite dev server intercepts <code>POST /api/analyze</code> in <code>vite.config.js</code>, injecting <code>GEMINI_API_KEY</code> safely from <code>.env</code>.</span>
+        </div>
+        <div class="flow-step">
+          <span class="flow-label">3. Gemini API</span>
+          <span class="flow-desc">Calls <code>gemini-3.5-flash</code> (with <code>gemini-3.8-flash</code> fallback) enforcing <code>response_schema</code> for guaranteed JSON.</span>
+        </div>
+        <div class="flow-step">
+          <span class="flow-label">4. Reasoning Card</span>
+          <span class="flow-desc">Frontend renders 3 interactive statement cards with AI evaluations and a "My pick" badge.</span>
+        </div>
+        <div class="flow-step">
+          <span class="flow-label">5. Truth Reveal</span>
+          <span class="flow-desc">User clicks their real lie; app checks <code>userLieIndex === suspectedLie</code> and renders in-character victory or defeat punchline.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3-Stop Code Route -->
+    <section>
+      <h2>The 3-Stop Code Tour</h2>
+
+      <div class="stop-card">
+        <div class="stop-title">Stop 1: State Store & Submission Trigger</div>
+        <div class="stop-path">src/main.js &rarr; handleSubmission()</div>
+        <p>
+          Transitions the app to <code>LOADING</code>, calls the helper <code>analyzeStatements()</code>, and stores <code>suspectedLie</code> (1, 2, or 3) and <code>reasoning</code> (array of 3 strings) directly in the reactive state store before rendering Phase 2.
+        </p>
+      </div>
+
+      <div class="stop-card">
+        <div class="stop-title">Stop 2: Safe Proxy & Schema Enforcement</div>
+        <div class="stop-path">vite.config.js &rarr; geminiProxyPlugin() & callGemini()</div>
+        <p>
+          Ensures the client bundle never touches <code>GEMINI_API_KEY</code>. Configures <code>response_schema</code> so Gemini is contractually forced to reply with valid JSON matching <code>{ suspectedLie, reasoning }</code>, with automatic 429/503 backoff and model cascade.
+        </p>
+      </div>
+
+      <div class="stop-card">
+        <div class="stop-title">Stop 3: Interactive Outcome & Replay Loop</div>
+        <div class="stop-path">src/main.js &rarr; renderRevealCard() & resetState()</div>
+        <p>
+          Compares player truth to AI guess. Selects a randomized victory line or begrudging defeat line from constant arrays, and resets all state cleanly back to Phase 1 on "Try me again".
+        </p>
+      </div>
+    </section>
+
+    <!-- To Change This, Start Here -->
+    <section>
+      <h2>To Change This, Start Here</h2>
+      <div class="pointer-grid">
+        <div class="pointer-item">
+          <div class="pointer-goal">Tweak the AI's Personality or Prompt</div>
+          <div class="pointer-target">vite.config.js &rarr; <code>systemPrompt</code> (line ~78)</div>
+        </div>
+        <div class="pointer-item">
+          <div class="pointer-goal">Add More Victory / Defeat Punchlines</div>
+          <div class="pointer-target">src/main.js &rarr; <code>VICTORY_LINES</code> / <code>DEFEAT_LINES</code></div>
+        </div>
+        <div class="pointer-item">
+          <div class="pointer-goal">Modify Card Glow & Dark Theme Styles</div>
+          <div class="pointer-target">style.css &rarr; <code>:root</code> variables and <code>.card</code></div>
+        </div>
+        <div class="pointer-item">
+          <div class="pointer-goal">Change Fallback Models or Delay</div>
+          <div class="pointer-target">vite.config.js &rarr; <code>models</code> array (line ~76)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reusable Practice -->
+    <section>
+      <h2>A Practice to Reuse</h2>
+      <div class="reuse-box">
+        <p>
+          <strong>Contract-Driven Structured Output with Backend Proxy:</strong>
+          Instead of having client-side Javascript call LLMs directly and risking API key leaks in public repos, use a simple local dev middleware (like Vite's <code>configureServer</code>) to proxy the call. Couple this with the LLM provider's native <code>response_schema</code> rather than parsing free-form markdown or regex. This guarantees that your frontend logic always receives clean, type-safe data without runtime parsing failures.
+        </p>
+      </div>
+    </section>
+
+    <!-- Run Instructions -->
+    <section>
+      <h2>How to Run Locally</h2>
+      <p>Clone the repository, create a <code>.env</code> file with <code>GEMINI_API_KEY=your_key</code>, and run:</p>
+      <pre style="background: rgba(15,23,42,0.8); padding: 12px; border-radius: 6px; border: 1px solid var(--border); font-family: var(--mono); font-size: 0.9rem; color: #38bdf8;">npm install
+npm run dev</pre>
+      <p style="margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);">
+        Open <code>http://localhost:5173</code> in any modern browser.
+      </p>
+    </section>
+  </div>
+</body>
+</html>
