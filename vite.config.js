@@ -72,7 +72,8 @@ function geminiProxyPlugin() {
  *   extraction — the response is always a clean { suspectedLie, reasoning }.
  */
 async function callGemini(apiKey, statements) {
-  const models = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-2.5-flash-lite'];
+  // Only verified, active models supporting generateContent and response_schema
+  const models = ['gemini-3.5-flash', 'gemini-3.8-flash'];
 
   const systemPrompt = `You are a dry, slightly smug lie detector playing "Two Truths and a Lie." You analyze three personal statements and identify which one is the lie. Your reasoning is deadpan, confident, and observational — like someone sizing up a stranger at a poker table. Never hedge, never use words like "might" or "possibly." Be terse. Be certain. Be slightly amused that this is so easy for you.`;
 
@@ -113,7 +114,8 @@ Statement 3: "${statements[2]}"`;
   };
 
   let lastError = null;
-  for (const model of models) {
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
     try {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const response = await fetch(endpoint, {
@@ -126,7 +128,13 @@ Statement 3: "${statements[2]}"`;
         const errorText = await response.text();
         console.warn(`[proxy] Model ${model} returned ${response.status}:`, errorText.slice(0, 150));
         lastError = new Error(`Gemini API returned ${response.status}`);
-        continue; // try next candidate model
+
+        // If rate limited or high demand, wait briefly before trying the next fallback
+        if ((response.status === 429 || response.status === 503) && i < models.length - 1) {
+          console.log(`[proxy] Pausing 1.2s before trying fallback model...`);
+          await new Promise(resolve => setTimeout(resolve, 1200));
+        }
+        continue;
       }
 
       const data = await response.json();
