@@ -295,6 +295,96 @@ body {
 }
 
 /* ──────────────────────────────────────────
+   Phase 3: Reveal Card
+   ────────────────────────────────────────── */
+
+.reveal {
+  animation: fadeSlideIn 0.3s ease both;
+}
+
+.reveal__label {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.reveal--victory .reveal__label {
+  color: var(--accent);
+}
+
+.reveal--defeat .reveal__label {
+  color: #f59e0b;
+}
+
+.reveal__reaction {
+  font-size: 1.02rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.55;
+  text-align: center;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* Statement cards in reveal are non-interactive */
+.statement-card--static {
+  cursor: default;
+}
+
+.statement-card--static:hover {
+  transform: none;
+  border-color: var(--border-input);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+/* The actual lie gets a distinct highlight */
+.statement-card--actual-lie {
+  border-color: #f59e0b55;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.statement-card--actual-lie:hover {
+  border-color: #f59e0b55;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+/* Badge variants for the reveal */
+.statement-card__badge--correct {
+  color: var(--accent);
+  background: var(--accent-subtle);
+  border-color: var(--accent-border);
+}
+
+.statement-card__badge--missed {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.statement-card__badge--wrong {
+  color: var(--text-muted);
+  background: rgba(100, 116, 139, 0.12);
+  border-color: rgba(100, 116, 139, 0.3);
+}
+
+/* Secondary button style for "Try me again" */
+.action-button--secondary {
+  background: transparent;
+  border: 1px solid var(--border-input);
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.action-button--secondary:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+/* ──────────────────────────────────────────
    Animations
    ────────────────────────────────────────── */
 

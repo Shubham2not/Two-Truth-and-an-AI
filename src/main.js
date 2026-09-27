@@ -247,9 +247,92 @@ async function handleSubmission() {
   render();
 }
 
+// ────────────────────────────────────────────────
+// Phase 3: Reveal Card
+// ────────────────────────────────────────────────
+
+/**
+ * Victory lines — used when the AI guessed correctly.
+ * Randomly picked so repeat rounds don't feel stale.
+ */
+const VICTORY_LINES = [
+  "Obviously. That one had 'made up on the spot' written all over it.",
+  "Too easy. You hesitated when you typed that one, didn't you?",
+  "I could tell from the phrasing alone. Next time, commit to the fiction.",
+  "That was barely a challenge. The other two had texture. That one was cardboard.",
+  "Called it. Your lie had that careful, over-rehearsed energy."
+];
+
+/**
+ * Defeat lines — used when the AI guessed wrong.
+ * The persona cracks slightly with begrudging respect.
+ */
+const DEFEAT_LINES = [
+  "...Huh. Didn't see that one coming. Fine — that one was good.",
+  "...Okay, I'll give you that. You sold it well enough to fool me.",
+  "Wait, seriously? ...Respect. I was genuinely wrong on that one.",
+  "...Hm. That's on me. You played that one perfectly straight.",
+  "I'll be honest — I didn't expect to be wrong here. Well played."
+];
+
+function renderRevealCard() {
+  const aiWon = state.suspectedLie === state.userLieIndex;
+  const reactionLine = aiWon
+    ? VICTORY_LINES[Math.floor(Math.random() * VICTORY_LINES.length)]
+    : DEFEAT_LINES[Math.floor(Math.random() * DEFEAT_LINES.length)];
+
+  const outcomeClass = aiWon ? 'reveal--victory' : 'reveal--defeat';
+  const outcomeLabel = aiWon ? 'Nailed it.' : 'Fooled me.';
+
+  // Build statement cards showing the outcome
+  const statementsHtml = state.statements.map((stmt, i) => {
+    const index = i + 1; // 1-based
+    const isActualLie = index === state.userLieIndex;
+    const wasAiPick = index === state.suspectedLie;
+
+    let tag = '';
+    if (isActualLie && wasAiPick) {
+      tag = '<span class="statement-card__badge statement-card__badge--correct">The lie — I knew it</span>';
+    } else if (isActualLie) {
+      tag = '<span class="statement-card__badge statement-card__badge--missed">The lie — got me</span>';
+    } else if (wasAiPick) {
+      tag = '<span class="statement-card__badge statement-card__badge--wrong">My pick — wrong</span>';
+    }
+
+    return `
+      <div class="statement-card statement-card--static ${isActualLie ? 'statement-card--actual-lie' : ''}">
+        <div class="statement-card__header">
+          <span class="statement-card__label">Statement ${index}</span>
+          ${tag}
+        </div>
+        <p class="statement-card__text">${escapeHtml(stmt)}</p>
+        <p class="statement-card__reasoning">${escapeHtml(state.reasoning[i] || '')}</p>
+      </div>
+    `;
+  }).join('');
+
+  appContainer.innerHTML = `
+    <div class="reveal ${outcomeClass}">
+      <header class="header">
+        <p class="reveal__label">${outcomeLabel}</p>
+        <p class="reveal__reaction">${escapeHtml(reactionLine)}</p>
+      </header>
+
+      <div class="reasoning-group">
+        ${statementsHtml}
+      </div>
+
+      <button type="button" id="reset-btn" class="action-button action-button--secondary">
+        Try me again
+      </button>
+    </div>
+  `;
+
+  document.getElementById('reset-btn')?.addEventListener('click', resetState);
+}
+
 /**
  * User clicks their actual lie — transition to REVEAL phase.
- * (Reveal card rendering is built in Slice 3.)
  */
 function handleReveal(lieIndex) {
   state.userLieIndex = lieIndex;
@@ -287,16 +370,7 @@ export function render() {
       renderErrorCard();
       break;
     case 'REVEAL':
-      // Slice 3 will add renderRevealCard() here.
-      // For now, show a placeholder so clicking a statement doesn't break.
-      appContainer.innerHTML = `
-        <header class="header">
-          <h1 class="title">Reveal coming in Slice 3...</h1>
-          <p class="tagline">You picked Statement ${state.userLieIndex}.</p>
-        </header>
-        <button type="button" id="reset-btn" class="action-button">Try me again</button>
-      `;
-      document.getElementById('reset-btn')?.addEventListener('click', resetState);
+      renderRevealCard();
       break;
     default:
       renderInputCard();

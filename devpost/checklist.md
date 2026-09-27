@@ -29,7 +29,7 @@ Build mode: learn
   Learner check: Enter three statements, submit, and read the AI's deadpan evaluation of your claims along with its highlighted pick.
   Commit: `Implement Gemini proxy and reasoning reveal card`
 
-- [ ] **3. Add interactive truth reveal, character reactions, and session reset**
+- [x] **3. Add interactive truth reveal, character reactions, and session reset**
   Becomes usable: The user clicks the statement that was their actual lie, triggering the punchline reveal card (smug victory if AI was right, begrudging crack in composure if wrong) and the "Try me again" reset button that clears state back to Phase 1.
   Why now: Completes the full core journey from start to finish, delivering the emotional payoff and enabling infinite replayability.
   PRD ref: `prd.md > The Core Journey` (steps 6-7), `prd.md > Features and Behavior` (3. Truth Reveal & Character Reaction, 4. Session Reset)
@@ -41,8 +41,8 @@ Build mode: learn
 
 ## Hands-on Checkpoints
 
-- [ ] Early usable behavior explored — Phase 2 reasoning card with live AI breakdown (Slice 2)
-- [ ] Final kick-the-tires exploration and feedback completed — Full game loop and edge cases (Slice 3)
+- [x] Early usable behavior explored — Phase 2 reasoning card with live AI breakdown (Slice 2)
+- [x] Final kick-the-tires exploration and feedback completed — Full game loop and edge cases (Slice 3)
 
 ## Final Review
 
@@ -62,4 +62,4 @@ Activity mode: [to be recorded upon completion]
 
 ## Revisions
 
-- Model changed from `gemini-2.5-flash` to `gemini-3.8-flash` — Google deprecated the 2.5 model for new API keys during the build; the 3.8 model is the current recommended replacement and uses the same structured output API.
+- Model fallback cascade added (`gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-2.5-flash-lite`) — handles temporary capacity spikes (503) or per-model free quota thresholds seamlessly by cascading to candidate flash models using the same structured output API.

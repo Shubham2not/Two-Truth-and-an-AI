@@ -72,7 +72,7 @@ function geminiProxyPlugin() {
  *   extraction — the response is always a clean { suspectedLie, reasoning }.
  */
 async function callGemini(apiKey, statements) {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+  const models = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-2.5-flash-lite'];
 
   const systemPrompt = `You are a dry, slightly smug lie detector playing "Two Truths and a Lie." You analyze three personal statements and identify which one is the lie. Your reasoning is deadpan, confident, and observational — like someone sizing up a stranger at a poker table. Never hedge, never use words like "might" or "possibly." Be terse. Be certain. Be slightly amused that this is so easy for you.`;
 
@@ -112,40 +112,48 @@ Statement 3: "${statements[2]}"`;
     }
   };
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody)
-  });
+  let lastError = null;
+  for (const model of models) {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[proxy] Gemini API error:', response.status, errorText);
-    throw new Error(`Gemini API returned ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.warn(`[proxy] Model ${model} returned ${response.status}:`, errorText.slice(0, 150));
+        lastError = new Error(`Gemini API returned ${response.status}`);
+        continue; // try next candidate model
+      }
+
+      const data = await response.json();
+      const textContent = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textContent) {
+        throw new Error('Gemini response missing expected content structure');
+      }
+
+      const parsed = JSON.parse(textContent);
+      if (
+        typeof parsed.suspectedLie !== 'number' ||
+        parsed.suspectedLie < 1 ||
+        parsed.suspectedLie > 3 ||
+        !Array.isArray(parsed.reasoning) ||
+        parsed.reasoning.length !== 3
+      ) {
+        throw new Error('Gemini response does not match expected schema');
+      }
+
+      return parsed;
+    } catch (err) {
+      lastError = err;
+      console.warn(`[proxy] Failed calling ${model}:`, err.message);
+    }
   }
 
-  const data = await response.json();
-
-  // Extract the structured JSON from Gemini's response envelope
-  const textContent = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!textContent) {
-    throw new Error('Gemini response missing expected content structure');
-  }
-
-  // Because we used response_schema, textContent is guaranteed valid JSON
-  const parsed = JSON.parse(textContent);
-
-  // Validate the shape we expect
-  if (
-    typeof parsed.suspectedLie !== 'number' ||
-    parsed.suspectedLie < 1 || parsed.suspectedLie > 3 ||
-    !Array.isArray(parsed.reasoning) ||
-    parsed.reasoning.length !== 3
-  ) {
-    throw new Error('Gemini response did not match expected schema shape');
-  }
-
-  return parsed;
+  throw lastError || new Error('All candidate models failed');
 }
 
 /** Read the full request body as a string. */
