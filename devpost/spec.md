@@ -224,3 +224,9 @@ The learner requested explicit, step-by-step transparency during the build rathe
 
 ### Open Questions
 - None remaining. All technical and product questions from PRD have been resolved.
+
+### Submission & Sharing Artifacts
+- **Public GitHub Repository**: https://github.com/Shubham2not/Two-Truth-and-an-AI
+- **Live Deployment**: https://ttaaai.vercel.app/
+- **Demo Video**: https://youtu.be/Nd6gSQU-P6I
+
