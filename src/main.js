@@ -58,6 +58,36 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+// Diagnostic messages cycled during interrogation
+const SCAN_MESSAGES = [
+  "Calibrating baseline biometrics...",
+  "Analyzing micro-hesitations in syntax...",
+  "Evaluating statement plausibility metrics...",
+  "Synthesizing neural lie verdict..."
+];
+
+let loadingTimer = null;
+let scanMessageIndex = 0;
+
+function startLoadingCycle() {
+  stopLoadingCycle();
+  scanMessageIndex = 0;
+  loadingTimer = setInterval(() => {
+    scanMessageIndex = (scanMessageIndex + 1) % SCAN_MESSAGES.length;
+    const msgEl = document.getElementById('loading-status-text');
+    if (msgEl) {
+      msgEl.textContent = SCAN_MESSAGES[scanMessageIndex];
+    }
+  }, 1000);
+}
+
+function stopLoadingCycle() {
+  if (loadingTimer) {
+    clearInterval(loadingTimer);
+    loadingTimer = null;
+  }
+}
+
 // ────────────────────────────────────────────────
 // Phase 1: Input Card
 // ────────────────────────────────────────────────
@@ -68,6 +98,9 @@ function renderInputCard() {
 
   appContainer.innerHTML = `
     <header class="header">
+      <div class="status-badge">
+        <span class="status-dot"></span> NEURAL POLYGRAPH v3.8
+      </div>
       <h1 class="title">Two Truths and an AI</h1>
       <p class="tagline">"Tell me three things. I'll tell you which one's a lie."</p>
     </header>
@@ -75,11 +108,14 @@ function renderInputCard() {
     <form id="statements-form" onsubmit="return false;">
       <div class="statement-group">
         <div class="field-wrapper">
-          <label class="field-label" for="stmt-1">Statement 1</label>
+          <label class="field-label" for="stmt-1">
+            <span>Statement 1</span>
+            <span class="field-number">01</span>
+          </label>
           <input 
             type="text" 
             id="stmt-1" 
-            class="text-input" 
+            class="statement-input" 
             placeholder="e.g., I've never broken a bone"
             value="${escapeHtml(state.statements[0])}"
             ${isLoading ? 'disabled' : ''}
@@ -89,11 +125,14 @@ function renderInputCard() {
         </div>
 
         <div class="field-wrapper">
-          <label class="field-label" for="stmt-2">Statement 2</label>
+          <label class="field-label" for="stmt-2">
+            <span>Statement 2</span>
+            <span class="field-number">02</span>
+          </label>
           <input 
             type="text" 
             id="stmt-2" 
-            class="text-input" 
+            class="statement-input" 
             placeholder="e.g., I speak three languages fluently"
             value="${escapeHtml(state.statements[1])}"
             ${isLoading ? 'disabled' : ''}
@@ -103,11 +142,14 @@ function renderInputCard() {
         </div>
 
         <div class="field-wrapper">
-          <label class="field-label" for="stmt-3">Statement 3</label>
+          <label class="field-label" for="stmt-3">
+            <span>Statement 3</span>
+            <span class="field-number">03</span>
+          </label>
           <input 
             type="text" 
             id="stmt-3" 
-            class="text-input" 
+            class="statement-input" 
             placeholder="e.g., I once won a regional chess tournament"
             value="${escapeHtml(state.statements[2])}"
             ${isLoading ? 'disabled' : ''}
@@ -117,18 +159,35 @@ function renderInputCard() {
         </div>
       </div>
 
-      <button 
-        type="button" 
-        id="submit-btn" 
-        class="action-button" 
-        ${!isValid || isLoading ? 'disabled' : ''}
-      >
-        ${isLoading ? '<span class="loading-pulse"></span> Reading you...' : "Let's see through you"}
-      </button>
+      ${isLoading ? `
+        <div class="loading-container">
+          <div class="scanner-meter">
+            <div class="scanner-meter__bar"></div>
+          </div>
+          <div class="loading-log">
+            <span class="spinner"></span>
+            <span id="loading-status-text">${SCAN_MESSAGES[scanMessageIndex]}</span>
+          </div>
+        </div>
+      ` : `
+        <button 
+          type="button" 
+          id="submit-btn" 
+          class="action-button" 
+          ${!isValid ? 'disabled' : ''}
+        >
+          Let's see through you
+        </button>
+      `}
     </form>
   `;
 
-  bindInputEvents();
+  if (isLoading) {
+    startLoadingCycle();
+  } else {
+    stopLoadingCycle();
+    bindInputEvents();
+  }
 }
 
 /** Attaches DOM event listeners for inputs and submission. */
@@ -160,6 +219,8 @@ function bindInputEvents() {
 // ────────────────────────────────────────────────
 
 function renderReasoningCard() {
+  stopLoadingCycle();
+
   const statementsHtml = state.statements.map((stmt, i) => {
     const index = i + 1; // 1-based
     const isSuspect = index === state.suspectedLie;
@@ -168,8 +229,8 @@ function renderReasoningCard() {
     return `
       <div class="statement-card ${isSuspect ? 'statement-card--suspect' : ''}" data-index="${index}">
         <div class="statement-card__header">
-          <span class="statement-card__label">Statement ${index}</span>
-          ${isSuspect ? '<span class="statement-card__badge">My pick</span>' : ''}
+          <span class="statement-card__label">Statement 0${index}</span>
+          ${isSuspect ? '<span class="statement-card__badge">My Pick</span>' : ''}
         </div>
         <p class="statement-card__text">${escapeHtml(stmt)}</p>
         <p class="statement-card__reasoning">${escapeHtml(reasoning)}</p>
@@ -179,6 +240,9 @@ function renderReasoningCard() {
 
   appContainer.innerHTML = `
     <header class="header">
+      <div class="status-badge">
+        <span class="status-dot"></span> SCAN COMPLETE • SUSPECT FLAGGED
+      </div>
       <h1 class="title">Here's what I see.</h1>
       <p class="tagline">I've made my pick. Now click the one that was actually the lie.</p>
     </header>
@@ -202,8 +266,13 @@ function renderReasoningCard() {
 // ────────────────────────────────────────────────
 
 function renderErrorCard() {
+  stopLoadingCycle();
+
   appContainer.innerHTML = `
     <header class="header">
+      <div class="status-badge" style="color:#f43f5e; border-color:rgba(244,63,94,0.4); background:rgba(244,63,94,0.1);">
+        <span class="status-dot" style="background:#f43f5e; box-shadow:0 0 8px #f43f5e;"></span> SIGNAL INTERRUPTED
+      </div>
       <h1 class="title">Two Truths and an AI</h1>
     </header>
 
@@ -302,7 +371,7 @@ function renderRevealCard() {
     return `
       <div class="statement-card statement-card--static ${isActualLie ? 'statement-card--actual-lie' : ''}">
         <div class="statement-card__header">
-          <span class="statement-card__label">Statement ${index}</span>
+          <span class="statement-card__label">Statement 0${index}</span>
           ${tag}
         </div>
         <p class="statement-card__text">${escapeHtml(stmt)}</p>
@@ -314,7 +383,10 @@ function renderRevealCard() {
   appContainer.innerHTML = `
     <div class="reveal ${outcomeClass}">
       <header class="header">
-        <p class="reveal__label">${outcomeLabel}</p>
+        <div class="reveal-verdict">
+          ${aiWon ? '● DECEPTION DETECTED' : '▲ POLYGRAPH BYPASSED'}
+        </div>
+        <h1 class="reveal__label">${outcomeLabel}</h1>
         <p class="reveal__reaction">${escapeHtml(reactionLine)}</p>
       </header>
 
