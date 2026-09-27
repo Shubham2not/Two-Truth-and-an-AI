@@ -4,6 +4,8 @@
  * Intercepts frontend requests in production on Vercel, keeps GEMINI_API_KEY
  * secure on the server, and returns structured deadpan analysis.
  */
+export const maxDuration = 30;
+
 export default async function handler(req, res) {
   // Only accept POST requests
   if (req.method !== 'POST') {
@@ -22,7 +24,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API key not configured in environment.' });
     }
 
-    const models = ['gemini-3.5-flash', 'gemini-3.8-flash'];
+    // Ultra-fast, highly-available models (~1s response time, independent quota)
+    const models = ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.8-flash'];
 
     const systemPrompt = `You are a dry, slightly smug lie detector playing "Two Truths and a Lie." You analyze three personal statements and identify which one is the lie. Your reasoning is deadpan, confident, and observational — like someone sizing up a stranger at a poker table. Never hedge, never use words like "might" or "possibly." Be terse. Be certain. Be slightly amused that this is so easy for you.`;
 

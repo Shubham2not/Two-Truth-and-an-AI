@@ -72,8 +72,8 @@ function geminiProxyPlugin() {
  *   extraction — the response is always a clean { suspectedLie, reasoning }.
  */
 async function callGemini(apiKey, statements) {
-  // Only verified, active models supporting generateContent and response_schema
-  const models = ['gemini-3.5-flash', 'gemini-3.8-flash'];
+  // Ultra-fast, highly-available models (~1s response time, independent quota)
+  const models = ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.8-flash'];
 
   const systemPrompt = `You are a dry, slightly smug lie detector playing "Two Truths and a Lie." You analyze three personal statements and identify which one is the lie. Your reasoning is deadpan, confident, and observational — like someone sizing up a stranger at a poker table. Never hedge, never use words like "might" or "possibly." Be terse. Be certain. Be slightly amused that this is so easy for you.`;
 
