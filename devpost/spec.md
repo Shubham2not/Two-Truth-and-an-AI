@@ -51,8 +51,9 @@ The browser updates its in-memory state and re-renders the card into the reasoni
 - **Build Tool & Local Server**: Vite (`vite@latest`)
   - *Rationale*: Instant development server, zero-config ES module bundling, and built-in dev-server middleware capability to host the `/api/analyze` proxy route without needing a separate backend process.
   - *Docs*: [Vite Documentation](https://vite.dev)
-- **AI Model & API**: Google Gemini (`gemini-2.5-flash`) via Google AI Studio
+- **AI Model & API**: Google Gemini (`gemini-3.8-flash`) via Google AI Studio
   - *Rationale*: Free-tier access suitable for hackathons, low latency, and native JSON schema output (`responseSchema`) guaranteeing strict structured data without regex parsing.
+  - *Note*: Originally planned for `gemini-2.5-flash`, which was deprecated for new API keys during the build. Updated to `gemini-3.8-flash` per Google's migration notice.
   - *Docs*: [Google Gemini API Docs](https://ai.google.dev/docs)
 
 ## Where It Runs and How Someone Tries It

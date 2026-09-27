@@ -1,8 +1,32 @@
 /**
- * Two Truths and an AI - State Machine & UI Controller
+ * Two Truths and an AI — State Machine & UI Controller
+ *
+ * HOW THE FRONTEND STATE MACHINE WORKS:
+ *
+ * The app has one global `state` object and a single `render()` function.
+ * Every user action (typing, clicking submit, clicking a statement) mutates
+ * the state and then calls `render()`, which clears the card and injects
+ * the HTML template for the current phase.
+ *
+ * Phase transitions:
+ *   INPUT ──(submit)──▶ LOADING ──(API success)──▶ REASONING
+ *                           │                           │
+ *                           ▼                      (click lie)
+ *                         ERROR ◀──(API failure)        │
+ *                           │                           ▼
+ *                       (retry)──▶ LOADING           REVEAL
+ *                                                       │
+ *                                                  (try again)
+ *                                                       │
+ *                                                       ▼
+ *                                                     INPUT
  */
 
+import { analyzeStatements } from './api.js';
+
+// ────────────────────────────────────────────────
 // Application State Store
+// ────────────────────────────────────────────────
 const state = {
   phase: 'INPUT', // 'INPUT' | 'LOADING' | 'REASONING' | 'REVEAL' | 'ERROR'
   statements: ['', '', ''],
@@ -14,16 +38,30 @@ const state = {
 
 const appContainer = document.getElementById('app');
 
-/**
- * Checks if all three statements contain non-whitespace text.
- */
+// ────────────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────────────
+
+/** Checks if all three statements contain non-whitespace text. */
 function areStatementsValid() {
   return state.statements.every(stmt => stmt && stmt.trim().length > 0);
 }
 
-/**
- * Renders the Input Card (Phase 1)
- */
+/** Escapes HTML characters in user input to prevent XSS. */
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ────────────────────────────────────────────────
+// Phase 1: Input Card
+// ────────────────────────────────────────────────
+
 function renderInputCard() {
   const isValid = areStatementsValid();
   const isLoading = state.phase === 'LOADING';
@@ -93,9 +131,7 @@ function renderInputCard() {
   bindInputEvents();
 }
 
-/**
- * Attaches DOM event listeners for inputs and submission.
- */
+/** Attaches DOM event listeners for inputs and submission. */
 function bindInputEvents() {
   const input1 = document.getElementById('stmt-1');
   const input2 = document.getElementById('stmt-2');
@@ -104,10 +140,7 @@ function bindInputEvents() {
 
   const updateStatement = (index, value) => {
     state.statements[index] = value;
-    const valid = areStatementsValid();
-    if (submitBtn) {
-      submitBtn.disabled = !valid;
-    }
+    if (submitBtn) submitBtn.disabled = !areStatementsValid();
   };
 
   if (input1) input1.addEventListener('input', (e) => updateStatement(0, e.target.value));
@@ -122,39 +155,148 @@ function bindInputEvents() {
   }
 }
 
+// ────────────────────────────────────────────────
+// Phase 2: Reasoning Card
+// ────────────────────────────────────────────────
+
+function renderReasoningCard() {
+  const statementsHtml = state.statements.map((stmt, i) => {
+    const index = i + 1; // 1-based
+    const isSuspect = index === state.suspectedLie;
+    const reasoning = state.reasoning[i] || '';
+
+    return `
+      <div class="statement-card ${isSuspect ? 'statement-card--suspect' : ''}" data-index="${index}">
+        <div class="statement-card__header">
+          <span class="statement-card__label">Statement ${index}</span>
+          ${isSuspect ? '<span class="statement-card__badge">My pick</span>' : ''}
+        </div>
+        <p class="statement-card__text">${escapeHtml(stmt)}</p>
+        <p class="statement-card__reasoning">${escapeHtml(reasoning)}</p>
+      </div>
+    `;
+  }).join('');
+
+  appContainer.innerHTML = `
+    <header class="header">
+      <h1 class="title">Here's what I see.</h1>
+      <p class="tagline">I've made my pick. Now click the one that was actually the lie.</p>
+    </header>
+
+    <div class="reasoning-group">
+      ${statementsHtml}
+    </div>
+  `;
+
+  // Each statement card is clickable — the user picks their actual lie
+  document.querySelectorAll('.statement-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const index = parseInt(card.dataset.index, 10);
+      handleReveal(index);
+    });
+  });
+}
+
+// ────────────────────────────────────────────────
+// Error State
+// ────────────────────────────────────────────────
+
+function renderErrorCard() {
+  appContainer.innerHTML = `
+    <header class="header">
+      <h1 class="title">Two Truths and an AI</h1>
+    </header>
+
+    <div class="error-block">
+      <p class="error-block__message">...I got distracted. Try that again.</p>
+    </div>
+
+    <button type="button" id="retry-btn" class="action-button">
+      Try that again
+    </button>
+  `;
+
+  document.getElementById('retry-btn')?.addEventListener('click', () => {
+    handleSubmission();
+  });
+}
+
+// ────────────────────────────────────────────────
+// Actions
+// ────────────────────────────────────────────────
+
 /**
- * Handles submission trigger: transitions to LOADING phase.
+ * Sends statements to the proxy and transitions state on success/failure.
  */
-function handleSubmission() {
+async function handleSubmission() {
   state.phase = 'LOADING';
+  state.errorMessage = null;
   render();
 
-  // In Slice 1: demonstrate transition to loading state
-  // Slice 2 will replace this timeout with the actual /api/analyze fetch call
-  console.log('[App] Statements submitted:', state.statements);
+  try {
+    const result = await analyzeStatements(state.statements);
+    state.suspectedLie = result.suspectedLie;
+    state.reasoning = result.reasoning;
+    state.phase = 'REASONING';
+  } catch (err) {
+    console.error('[App] Analysis failed:', err.message);
+    state.errorMessage = err.message;
+    state.phase = 'ERROR';
+  }
+
+  render();
 }
 
 /**
- * Helper to escape HTML characters in user input
+ * User clicks their actual lie — transition to REVEAL phase.
+ * (Reveal card rendering is built in Slice 3.)
  */
-function escapeHtml(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+function handleReveal(lieIndex) {
+  state.userLieIndex = lieIndex;
+  state.phase = 'REVEAL';
+  render();
 }
 
 /**
- * Main render function dispatching by state.phase
+ * Resets all state back to clean Phase 1.
  */
+function resetState() {
+  state.phase = 'INPUT';
+  state.statements = ['', '', ''];
+  state.suspectedLie = null;
+  state.reasoning = [];
+  state.userLieIndex = null;
+  state.errorMessage = null;
+  render();
+}
+
+// ────────────────────────────────────────────────
+// Main Render Dispatcher
+// ────────────────────────────────────────────────
+
 export function render() {
   switch (state.phase) {
     case 'INPUT':
     case 'LOADING':
       renderInputCard();
+      break;
+    case 'REASONING':
+      renderReasoningCard();
+      break;
+    case 'ERROR':
+      renderErrorCard();
+      break;
+    case 'REVEAL':
+      // Slice 3 will add renderRevealCard() here.
+      // For now, show a placeholder so clicking a statement doesn't break.
+      appContainer.innerHTML = `
+        <header class="header">
+          <h1 class="title">Reveal coming in Slice 3...</h1>
+          <p class="tagline">You picked Statement ${state.userLieIndex}.</p>
+        </header>
+        <button type="button" id="reset-btn" class="action-button">Try me again</button>
+      `;
+      document.getElementById('reset-btn')?.addEventListener('click', resetState);
       break;
     default:
       renderInputCard();

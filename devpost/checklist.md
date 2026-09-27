@@ -9,7 +9,7 @@ Build mode: learn
 
 ## Slices
 
-- [ ] **1. Scaffold input card with responsive validation and loading state**
+- [x] **1. Scaffold input card with responsive validation and loading state**
   Becomes usable: A running app at `http://localhost:5173` showing the centered dark slate card, in-character title and tagline, three stacked statement inputs with example placeholders, and the "Let's see through you" button that enables only when all three fields have content and switches to "Reading you..." when clicked.
   Why now: Establishes the runnable project foundation (Vite setup, styling system, card layout) and the first user touchpoint, proving the input state and transition before wiring external dependencies.
   PRD ref: `prd.md > The Core Journey` (steps 1-4), `prd.md > Features and Behavior` (1. Statement Submission)
@@ -19,7 +19,7 @@ Build mode: learn
   Learner check: Open `http://localhost:5173`, type into the three fields, watch the button enable, click it, and see the button text swap to "Reading you...".
   Commit: `Scaffold input card with responsive validation and loading state`
 
-- [ ] **2. Implement Gemini proxy route and reasoning reveal card**
+- [x] **2. Implement Gemini proxy route and reasoning reveal card**
   Becomes usable: Submitting statements triggers the local backend proxy (`POST /api/analyze`), which calls Google Gemini with a deadpan persona prompt and native JSON schema. The app transitions to Phase 2, displaying each statement with its one-line deadpan evaluation and highlighting the AI's suspected lie.
   Why now: Proves the **unique kernel** and de-risks the primary technical unknown (server-side API key handling, proxy middleware, and guaranteed JSON schema output) immediately after scaffolding.
   PRD ref: `prd.md > The Core Journey` (step 5), `prd.md > Features and Behavior` (2. AI Reasoning Display, 4. Session Reset & Error Handling)
@@ -61,3 +61,5 @@ Reflection: [to be recorded upon completion]
 Activity mode: [to be recorded upon completion]
 
 ## Revisions
+
+- Model changed from `gemini-2.5-flash` to `gemini-3.8-flash` — Google deprecated the 2.5 model for new API keys during the build; the 3.8 model is the current recommended replacement and uses the same structured output API.
